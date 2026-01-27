@@ -1,0 +1,112 @@
+.app-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.app {
+  flex-grow: 1;
+  max-width: min(100%, max(768px - 4rem, (100vh - 4rem - 8rem) * 1.75 + 2rem));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.app-header {
+  display: flex;
+  flex-flow: row wrap-reverse;
+  align-items: end;
+  row-gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.app-header-left {
+  display: flex;
+  align-items: center;
+  flex-flow: row wrap;
+  gap: .5rem;
+}
+
+.app-header-right {
+  flex-grow: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.align-right-on-break {
+  margin-left: auto;
+}
+
+.panels {
+  width: 100%;
+  display: flex;
+  flex-flow: row wrap;
+  --panel-gap: 2rem;
+  gap: var(--panel-gap);
+}
+
+.left-panel, .right-panel {
+  width: 100%;
+}
+
+.left-container, .right-container {
+  margin-bottom: 1rem;
+}
+
+.left-container {
+  flex-grow: 1;
+  width: auto;
+  aspect-ratio: 1 / 1;
+}
+
+.left-container>div {
+  width: auto !important;
+  aspect-ratio: 1 / 1 !important;
+}
+
+.left-container>div>div:first-child {
+  width: auto !important;
+}
+
+.right-container {
+  border: 1px solid #808080;
+  height: 15rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-footer {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: start;
+  gap: 1rem;
+}
+
+.panel-footer-right {
+  flex-grow: 1;
+  display: flex;
+  align-items: start;
+  justify-content: flex-end;
+}
+
+.buttons {
+  display: flex;
+  flex-flow: row wrap;
+  gap: 1rem;
+}
+
+@media only screen and (min-width: 768px) {
+  .left-panel {
+    width: calc((100% - var(--panel-gap)) / 14 * 8);
+  }
+
+  .right-panel {
+    width: calc((100% - var(--panel-gap)) / 14 * 6);
+  }
+
+  .right-container {
+    height: auto;
+    aspect-ratio: 6 / 8;
+  }
+}

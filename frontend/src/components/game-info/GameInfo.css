@@ -1,0 +1,26 @@
+.game-info {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.history-table-container {
+    width: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+.history-table td {
+    width: 40%;
+}
+
+.history-table td:first-of-type {
+    width: 20%;
+}
+
+.game-info-footer {
+    text-align: center;
+    margin-bottom: .5rem;
+}

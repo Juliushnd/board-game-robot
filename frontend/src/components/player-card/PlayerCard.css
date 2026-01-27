@@ -1,0 +1,11 @@
+.player-card {
+    display: flex;
+    align-items: center;
+    font-size: 125%;
+    column-gap: .5rem;
+}
+
+.player-card .player-icon {
+    margin-right: .5rem;
+    font-size: 175%;
+}

@@ -1,0 +1,16 @@
+.spare-piece-row {
+    /* On small devices, the board editor component is displayed at the same width as the chess board. To ensure that
+    the 6 spare pieces have the same size as the chess pieces on the board (which is 8 pieces wide), we scale this row
+    to 6/8 = 75%. */
+    width: 75%;
+    align-self: center;
+    display: flex;
+}
+
+@media only screen and (min-width: 768px) {
+    .spare-piece-row {
+        /* On larger devices, the board editor component is displayed to the right of the chess board and already has
+        the correct width (which is 75% of the board's width). */
+        width: 100%;
+    }
+}

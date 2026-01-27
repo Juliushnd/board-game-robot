@@ -1,0 +1,192 @@
+# Pipeline stages
+stages:
+  - validate
+  - lint
+  - build
+  - test
+
+# Pipeline settings
+workflow:
+  name: '$PIPELINE_NAME'
+  rules:
+    # Only run this pipeline for merge requests and commits on main
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+      variables:
+        PIPELINE_NAME: 'MR pipeline: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'
+    - if: $CI_COMMIT_BRANCH == 'main'
+      variables:
+        PIPELINE_NAME: 'Branch pipeline: $CI_COMMIT_BRANCH'
+
+
+# Validate commit message format
+validate-commit-messages:
+  stage: validate
+  image:
+    name: alpine/git
+    entrypoint: [""]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  script:
+    - |
+      # Commit message validation script adopted from https://bytegoblin.io/blog/enforcing-conventional-commit-in-gitlab.mdx
+
+      # Regex pattern for Conventional Commits
+      COMMIT_REGEX="^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\((frontend|backend|controller)\))?: [a-z0-9].{1,49}$"
+
+      # Ensure target branch is fetched
+      git fetch origin
+
+      # Check each commit message
+      git log --format=%s origin/${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}..HEAD | while read -r line; do
+        echo "Checking commit message: \"$line\""
+        if ! [[ "$line" =~ "$COMMIT_REGEX" ]]; then
+          echo "ERROR: Invalid commit message: \"$line\""
+          echo "Commit messages must be in the format: \"type(scope): subject\""
+          exit 1
+        fi
+      done
+
+      echo "All commit messages are valid."
+
+
+# ====== Frontend jobs ======
+
+# Frontend job template
+.frontend: &frontend
+  image: node:slim
+  rules:
+    - changes:
+        - frontend/**/*
+  before_script:
+    - cd frontend
+    - npm ci --cache .npm --prefer-offline
+  cache:
+    key:
+      files:
+        - frontend/package.json
+        - frontend/package-lock.json
+      prefix: frontend
+    paths:
+      - frontend/.npm/
+
+# Lint
+lint-frontend:
+  stage: lint
+  <<: *frontend
+  script:
+    - npm run lint
+
+# Build
+build-frontend:
+  stage: build
+  <<: *frontend
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist/
+    expire_in: 1 week
+
+# Test
+test-frontend:
+  stage: test
+  <<: *frontend
+  script:
+    - npm test
+
+
+# ====== Backend jobs ======
+
+# Backend job template
+.backend: &backend
+  image: git.tu-berlin.de:5000/ees-mpsees-sose25-playing-2/board-game-robot/backend
+  rules:
+    - changes:
+        - backend/**/*
+  before_script:
+    - cd backend
+    - python -m venv .venv
+    - .venv/bin/pip install -r requirements-dev.txt
+  cache:
+    key:
+      files:
+        - backend/requirements.txt
+        - backend/requirements-dev.txt
+      prefix: backend
+    paths:
+      - backend/.venv/
+
+# Lint
+lint-backend:
+  stage: lint
+  <<: *backend
+  script:
+    - .venv/bin/pylint --output-format=text .
+
+# Test
+test-backend:
+  stage: test
+  <<: *backend
+  script:
+    - .venv/bin/pytest -v
+
+
+# ====== Controller jobs ======
+
+# Controller job template
+.controller: &controller
+  image: git.tu-berlin.de:5000/ees-mpsees-sose25-playing-2/board-game-robot/controller
+  rules:
+    - changes:
+        - controller/**/*
+  before_script:
+    - cd controller
+  cache:
+    key:
+      files:
+        - controller/CMakeLists.txt
+      prefix: controller
+    paths:
+      - controller/build/.cache/
+
+# Lint
+lint-controller:
+  stage: lint
+  <<: *controller
+  script:
+    - cpplint --recursive src
+
+# Analyze
+analyze-controller:
+  stage: lint
+  <<: *controller
+  script:
+    - mkdir -p build && cd build
+    - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+    - mkdir -p .cppcheck
+    - cppcheck --cppcheck-build-dir=.cppcheck --error-exitcode=1 --project=compile_commands.json --suppressions-list=../cppcheck-suppressions.txt
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-controller-cppcheck
+    paths:
+      - controller/build/.cppcheck/
+
+# Build
+build-controller:
+  stage: build
+  <<: *controller
+  script:
+    - mkdir -p build && cd build
+    - cmake ..
+    - make
+  artifacts:
+    paths:
+      - controller/build/
+    expire_in: 1 week
+
+# Test
+test-controller:
+  stage: test
+  <<: *controller
+  script:
+    - cd build
+    - make test

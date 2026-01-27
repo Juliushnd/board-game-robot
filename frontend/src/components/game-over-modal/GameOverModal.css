@@ -1,0 +1,9 @@
+.game-over-result {
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+}
+
+.game-over-result .player-card {
+    margin-bottom: .5rem;
+}
